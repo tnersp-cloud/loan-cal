@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Calculator</title>
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-2: #fbf8f3;
+      --text: #22303f;
+      --muted: #64707f;
+      --accent: #8e7550;
+      --accent-2: #6d5b40;
+      --line: #e8dfcf;
+      --success: #0f766e;
+      --warning: #b45309;
+      --danger: #b91c1c;
+      --shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Aptos", "Segoe UI", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(137, 113, 73, 0.16), transparent 32%),
+        radial-gradient(circle at top right, rgba(91, 74, 46, 0.12), transparent 28%),
+        linear-gradient(180deg, #faf7f2 0%, var(--bg) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 26rem;
+      height: 26rem;
+      border-radius: 50%;
+      filter: blur(48px);
+      pointer-events: none;
+      opacity: 0.42;
+      z-index: -1;
+      animation: drift 14s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      top: -7rem;
+      right: -6rem;
+      background: rgba(142, 117, 80, 0.22);
+    }
+
+    body::after {
+      bottom: -8rem;
+      left: -7rem;
+      background: rgba(109, 91, 64, 0.14);
+      animation-delay: -5s;
+    }
+
+    .shell {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.85rem, 3.2vw, 3rem);
+      line-height: 1.06;
+      letter-spacing: -0.04em;
+    }
+
+    .lede {
+      margin: 14px 0 0;
+      max-width: 64ch;
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .hero-card {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 241, 230, 0.95));
+      border: 1px solid rgba(142, 117, 80, 0.14);
+      color: white;
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      animation: riseIn 0.8s ease both;
+    }
+
+    .hero-card .value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      margin-top: 10px;
+      letter-spacing: -0.04em;
+      color: var(--accent-2);
+    }
+
+    .hero-card .caption {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(232, 223, 207, 0.95);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: riseIn 0.85s ease both;
+    }
+
+    .card:nth-of-type(1) { animation-delay: 0.03s; }
+    .card:nth-of-type(2) { animation-delay: 0.08s; }
+    .schedule { animation-delay: 0.12s; }
+
+    .card-header {
+      padding: 14px 18px;
+      background: linear-gradient(180deg, #fff, var(--panel-2));
+      border-bottom: 1px solid var(--line);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      font-size: 0.96rem;
+    }
+
+    .card-body {
+      padding: 16px 18px 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-bottom: 12px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid #d9d2c3;
+      border-radius: 12px;
+      padding: 12px 13px;
+      font-size: 0.94rem;
+      outline: none;
+      background: white;
+      color: var(--text);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(137, 113, 73, 0.12);
+      background: #fffefb;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+
+    .primary {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 14px 28px rgba(137, 113, 73, 0.25);
+    }
+
+    .secondary {
+      color: var(--accent-2);
+      background: #fff;
+      border: 1px solid #d9d2c3;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .payment {
+      display: grid;
+      gap: 7px;
+      padding: 14px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(142, 117, 80, 0.12), rgba(142, 117, 80, 0.04));
+      border: 1px solid rgba(142, 117, 80, 0.14);
+    }
+
+    .payment .label {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .payment .amount {
+      font-size: clamp(1.55rem, 2.8vw, 2.2rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    .payment .caption {
+      color: var(--muted);
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .pill.success { color: var(--success); }
+    .pill.warning { color: var(--warning); }
+    .pill.danger { color: var(--danger); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .stat .name {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat .value {
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .schedule {
+      margin-top: 18px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0eadf;
+      text-align: left;
+      font-size: 0.86rem;
+    }
+
+    th {
+      background: #fcfaf6;
+      color: var(--accent-2);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    tbody tr:hover td { background: #fffdf8; }
+
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .error {
+      color: var(--danger);
+      min-height: 1.1em;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .pulse {
+      animation: pulseGlow 2.6s ease-in-out infinite;
+    }
+
+    @media (max-width: 920px) {
+      .hero, .grid, .stats, .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes drift {
+      from { transform: translate3d(0, 0, 0) scale(1); }
+      to { transform: translate3d(18px, 22px, 0) scale(1.06); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(142, 117, 80, 0.18); }
+      50% { box-shadow: 0 0 0 10px rgba(142, 117, 80, 0); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Loan Calculator</div>
+        <h1>Mortgage repayment calculator extracted from the Wright Mortgage project.</h1>
+        <p class="lede">Enter salary, property cost, down payment, tenure, and interest rate to estimate your monthly repayment, total interest, and amortization schedule.</p>
+      </div>
+      <aside class="hero-card">
+        <div class="eyebrow" style="color: rgba(255,255,255,0.78);">Current Focus</div>
+        <div class="caption">This standalone page keeps the core loan math from the project and removes the surrounding site dependencies.</div>
+        <div class="value pulse" id="hero-payment">&#8358;0.00</div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <div class="card-header">Loan Details</div>
+        <div class="card-body">
+          <form id="loan-form" autocomplete="off">
+            <div class="form-grid">
+              <div class="field">
+                <label for="salary">Basic Salary (&#8358;)</label>
+                <input id="salary" inputmode="numeric" placeholder="500000" maxlength="15" required>
+                <div class="error" id="salary-error"></div>
+              </div>
+              <div class="field">
+                <label for="property">Property Cost (&#8358;)</label>
+                <input id="property" inputmode="numeric" placeholder="17000000" maxlength="15" required>
+                <div class="error" id="property-error"></div>
+              </div>
+              <div class="field">
+                <label for="downpayment">Down Payment (%)</label>
+                <input id="downpayment" inputmode="numeric" placeholder="20" maxlength="3" required>
+                <div class="error" id="downpayment-error"></div>
+              </div>
+              <div class="field">
+                <label for="tenure">Loan Tenure (Years)</label>
+                <input id="tenure" inputmode="numeric" placeholder="15" maxlength="2" required>
+                <div class="error" id="tenure-error"></div>
+              </div>
+              <div class="field full">
+                <label for="interest">Interest Rate (% per annum)</label>
+                <input id="interest" inputmode="decimal" placeholder="10" maxlength="5" required>
+                <div class="error" id="interest-error"></div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" type="submit">Calculate Repayment</button>
+              <button class="secondary" type="button" id="reset-btn">Reset</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Results</div>
+        <div class="card-body results">
+          <div class="payment">
+            <div class="label">Estimated Monthly Repayment</div>
+            <div class="amount" id="monthly-payment">&#8358;0.00</div>
+            <div class="caption" id="eligibility-text">Enter loan details to calculate</div>
+          </div>
+
+          <div class="pill-row" id="status-pills">
+            <span class="pill">Awaiting input</span>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="name">Total Payable</div><div class="value" id="total-amount">&#8358;0.00</div></div>
+            <div class="stat"><div class="name">Total Interest</div><div class="value" id="total-interest">&#8358;0.00</div></div>
+            <div class="stat"><div class="name">Mortgage Amount</div><div class="value" id="mortgage-amount">&#8358;0.00</div></div>
+          </div>
+
+          <div class="stats">
+            <div class="stat"><div class="name">Property Cost</div><div class="value" id="property-cost">&#8358;0.00</div></div>
+            <div class="stat"><div class="name">Direct Equity</div><div class="value" id="equity-amount">&#8358;0.00</div></div>
+            <div class="stat"><div class="name">Duration</div><div class="value" id="duration">0 Months</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card schedule">
+      <div class="card-header">Monthly Payment Schedule</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Payment</th>
+                <th>Principal</th>
+                <th>Interest</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody id="payment-schedule">
+              <tr><td colspan="5">No schedule yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note" id="schedule-note">Showing the first 12 months after calculation.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const salaryInput = document.getElementById('salary');
+    const propertyInput = document.getElementById('property');
+    const downPaymentInput = document.getElementById('downpayment');
+    const tenureInput = document.getElementById('tenure');
+    const interestInput = document.getElementById('interest');
+
+    const monthlyPaymentEl = document.getElementById('monthly-payment');
+    const heroPaymentEl = document.getElementById('hero-payment');
+    const eligibilityTextEl = document.getElementById('eligibility-text');
+    const statusPillsEl = document.getElementById('status-pills');
+    const totalAmountEl = document.getElementById('total-amount');
+    const totalInterestEl = document.getElementById('total-interest');
+    const mortgageAmountEl = document.getElementById('mortgage-amount');
+    const propertyCostEl = document.getElementById('property-cost');
+    const equityAmountEl = document.getElementById('equity-amount');
+    const durationEl = document.getElementById('duration');
+    const paymentScheduleEl = document.getElementById('payment-schedule');
+    const resetBtn = document.getElementById('reset-btn');
+
+    const errorEls = {
+      salary: document.getElementById('salary-error'),
+      property: document.getElementById('property-error'),
+      downpayment: document.getElementById('downpayment-error'),
+      tenure: document.getElementById('tenure-error'),
+      interest: document.getElementById('interest-error')
+    };
+
+    function formatCurrency(amount) {
+      const value = Number.isFinite(amount) ? amount : 0;
+      return new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function parseValue(input) {
+      const cleaned = String(input.value || '').replace(/[^\d.]/g, '');
+      const value = parseFloat(cleaned);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function formatNumberString(value, allowDecimal = false) {
+      const cleaned = String(value || '').replace(/[^\d.]/g, '');
+      if (!cleaned) return '';
+
+      if (!allowDecimal) {
+        return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      }
+
+      const parts = cleaned.split('.');
+      const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const decimalPart = parts.slice(1).join('').replace(/\./g, '');
+      return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
+    }
+
+    function formatInputValue(input, allowDecimal = false) {
+      const cursorAtEnd = input.selectionStart === input.value.length;
+      const formatted = formatNumberString(input.value, allowDecimal);
+      input.value = formatted;
+
+      if (cursorAtEnd) {
+        input.setSelectionRange(formatted.length, formatted.length);
+      }
+    }
+
+    function setError(key, message) {
+      errorEls[key].textContent = message || '';
+    }
+
+    function clearErrors() {
+      Object.keys(errorEls).forEach((key) => setError(key, ''));
+    }
+
+    function getValues() {
+      return {
+        salary: parseValue(salaryInput),
+        propertyCost: parseValue(propertyInput),
+        downPaymentPercent: parseValue(downPaymentInput),
+        loanTenure: parseValue(tenureInput),
+        interestRate: parseValue(interestInput)
+      };
+    }
+
+    function validate(values) {
+      const messages = {};
+      if (values.salary < 50000) messages.salary = 'Minimum salary is ₦50,000';
+      if (values.propertyCost < 1000000) messages.property = 'Minimum property cost is ₦1,000,000';
+      if (values.downPaymentPercent < 0 || values.downPaymentPercent > 100) messages.downpayment = 'Enter a value from 0 to 100';
+      if (values.loanTenure < 1 || values.loanTenure > 30) messages.tenure = 'Enter a value from 1 to 30';
+      if (values.interestRate < 0 || values.interestRate > 50) messages.interest = 'Enter a value from 0 to 50';
+      return messages;
+    }
+
+    function calculateMortgageDetails(values) {
+      const downPayment = (values.propertyCost * values.downPaymentPercent) / 100;
+      const loanAmount = values.propertyCost - downPayment;
+      const monthlyRate = values.interestRate / 100 / 12;
+      const numberOfPayments = values.loanTenure * 12;
+
+      let monthlyPayment = 0;
+      if (numberOfPayments > 0) {
+        if (values.interestRate === 0) {
+          monthlyPayment = loanAmount / numberOfPayments;
+        } else {
+          const factor = Math.pow(1 + monthlyRate, numberOfPayments);
+          monthlyPayment = (loanAmount * monthlyRate * factor) / (factor - 1);
+        }
+      }
+
+      return { downPayment, loanAmount, monthlyPayment, monthlyRate, numberOfPayments };
+    }
+
+    function generatePaymentSchedule(loanAmount, monthlyPayment, monthlyRate, numberOfPayments) {
+      const schedule = [];
+      let balance = loanAmount;
+
+      for (let month = 1; month <= numberOfPayments; month++) {
+        const interest = balance * monthlyRate;
+        const principal = monthlyPayment - interest;
+        balance = Math.max(0, balance - principal);
+
+        schedule.push({ month, payment: monthlyPayment, principal, interest, balance });
+
+        if (balance <= 0.01) break;
+      }
+
+      return schedule;
+    }
+
+    function setPills(values, mortgageDetails) {
+      const debtToIncomeRatio = values.salary > 0 ? (mortgageDetails.monthlyPayment / values.salary) * 100 : 0;
+      const pills = [];
+
+      if (values.downPaymentPercent >= 20) {
+        pills.push('<span class="pill success">Strong down payment</span>');
+      } else if (values.downPaymentPercent >= 10) {
+        pills.push('<span class="pill warning">Acceptable down payment</span>');
+      } else {
+        pills.push('<span class="pill danger">Low down payment</span>');
+      }
+
+      if (debtToIncomeRatio <= 33) {
+        pills.push('<span class="pill success">Affordable repayment</span>');
+      } else {
+        pills.push('<span class="pill danger">Repayment above 33% of salary</span>');
+      }
+
+      pills.push(`<span class="pill">Debt-to-income: ${debtToIncomeRatio.toFixed(1)}%</span>`);
+      statusPillsEl.innerHTML = pills.join('');
+    }
+
+    function renderSchedule(schedule) {
+      if (!schedule.length) {
+        paymentScheduleEl.innerHTML = '<tr><td colspan="5">No schedule available.</td></tr>';
+        return;
+      }
+
+      const rows = schedule.slice(0, 12).map((row) => `
+        <tr>
+          <td>${row.month}</td>
+          <td>${formatCurrency(row.payment)}</td>
+          <td>${formatCurrency(row.principal)}</td>
+          <td>${formatCurrency(row.interest)}</td>
+          <td>${formatCurrency(row.balance)}</td>
+        </tr>
+      `).join('');
+
+      paymentScheduleEl.innerHTML = rows;
+    }
+
+    function renderEmptyState() {
+      monthlyPaymentEl.textContent = formatCurrency(0);
+      heroPaymentEl.textContent = formatCurrency(0);
+      eligibilityTextEl.textContent = 'Enter loan details to calculate';
+      statusPillsEl.innerHTML = '<span class="pill">Awaiting input</span>';
+      totalAmountEl.textContent = formatCurrency(0);
+      totalInterestEl.textContent = formatCurrency(0);
+      mortgageAmountEl.textContent = formatCurrency(0);
+      propertyCostEl.textContent = formatCurrency(0);
+      equityAmountEl.textContent = formatCurrency(0);
+      durationEl.textContent = '0 Months';
+      paymentScheduleEl.innerHTML = '<tr><td colspan="5">No schedule yet.</td></tr>';
+      clearErrors();
+    }
+
+    function hasRequiredValues(values) {
+      return [
+        salaryInput.value,
+        propertyInput.value,
+        downPaymentInput.value,
+        tenureInput.value,
+        interestInput.value
+      ].every((value) => String(value).trim() !== '');
+    }
+
+    function updateUI() {
+      const values = getValues();
+      clearErrors();
+
+      if (!hasRequiredValues(values)) {
+        renderEmptyState();
+        return;
+      }
+
+      const validation = validate(values);
+      Object.entries(validation).forEach(([key, message]) => setError(key, message));
+
+      const hasValidationErrors = Object.keys(validation).length > 0;
+      if (hasValidationErrors) {
+        eligibilityTextEl.textContent = 'Correct the inputs to see a result';
+        statusPillsEl.innerHTML = '<span class="pill danger">Validation required</span>';
+        propertyCostEl.textContent = formatCurrency(values.propertyCost);
+        return;
+      }
+
+      const mortgageDetails = calculateMortgageDetails(values);
+      const paymentSchedule = generatePaymentSchedule(
+        mortgageDetails.loanAmount,
+        mortgageDetails.monthlyPayment,
+        mortgageDetails.monthlyRate,
+        mortgageDetails.numberOfPayments
+      );
+
+      const totalPayment = mortgageDetails.monthlyPayment * mortgageDetails.numberOfPayments;
+      const totalInterest = totalPayment - mortgageDetails.loanAmount;
+
+      monthlyPaymentEl.textContent = formatCurrency(mortgageDetails.monthlyPayment);
+      heroPaymentEl.textContent = formatCurrency(mortgageDetails.monthlyPayment);
+      eligibilityTextEl.textContent = mortgageDetails.monthlyPayment / values.salary <= 0.33
+        ? 'Monthly repayment stays within the recommended affordability range.'
+        : 'Monthly repayment exceeds the recommended affordability range.';
+      totalAmountEl.textContent = formatCurrency(totalPayment);
+      totalInterestEl.textContent = formatCurrency(totalInterest);
+      mortgageAmountEl.textContent = formatCurrency(mortgageDetails.loanAmount);
+      propertyCostEl.textContent = formatCurrency(values.propertyCost);
+      equityAmountEl.textContent = formatCurrency(mortgageDetails.downPayment);
+      durationEl.textContent = `${values.loanTenure * 12} Months`;
+
+      setPills(values, mortgageDetails);
+      renderSchedule(paymentSchedule);
+    }
+
+    function resetForm() {
+      salaryInput.value = '';
+      propertyInput.value = '';
+      downPaymentInput.value = '';
+      tenureInput.value = '';
+      interestInput.value = '';
+      updateUI();
+    }
+
+    [salaryInput, propertyInput, downPaymentInput, tenureInput, interestInput].forEach((input) => {
+      const allowDecimal = input === interestInput;
+      input.addEventListener('input', () => {
+        formatInputValue(input, allowDecimal);
+        updateUI();
+      });
+    });
+
+    document.getElementById('loan-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      updateUI();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetForm();
+    });
+
+    renderEmptyState();
+  </script>
+</body>
+</html>
